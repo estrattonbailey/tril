@@ -6,7 +6,7 @@ function proxy (target) {
   })
 }
 
-function init (facets, items, keypath) {
+function init (facets, items, keypath, deviation) {
   let o = {}
 
   for (let facet in facets) {
@@ -18,11 +18,7 @@ function init (facets, items, keypath) {
           i[val] = {
             get () {
               keypath += val + ','
-              let o = {}
-              for (let k in facets) {
-                if (facet !== k) o[k] = facets[k]
-              }
-              return init(o, items, keypath)
+              return init(facets, items, keypath, deviation)
             }
           }
         }
@@ -34,24 +30,32 @@ function init (facets, items, keypath) {
 
   return proxy(Object.create({
     get items () {
-      let len = 0
-      let facets = {}
+      let len = 0 - (this.deviation !== undefined ? this.deviation : 0)
+      let _facets = {}
+      let _items = []
       for (let f of keypath.split(',')) {
         if (!f) continue
         let facet = f.split('=')
-        facets[facet[0]] = facet[1]
+        _facets[facet[0]] = _facets[facet[0]] || []
+        _facets[facet[0]].push(facet[1])
         len++
       }
-      let _items = []
       for (let i of items) {
         let matches = 0
-        for (let f in i.facets) {
-          if (!facets[f]) continue
-          if (i.facets[f].indexOf(facets[f]) > -1) matches++
-          if (matches === len) _items.push(i)
+        for (let k in _facets) {
+          for (let f of _facets[k]) {
+            if (i.facets[k].indexOf(f) > -1) matches++
+            if (matches === len && _items.indexOf(i) < 0) _items.push(i)
+          }
         }
       }
       return _items
+    },
+    set deviation (int) {
+      deviation = int
+    },
+    get deviation () {
+      return deviation
     }
   }, o))
 }
@@ -71,5 +75,5 @@ export default function db (entries) {
     items.push(i)
   }
 
-  return proxy(init(facets, items, ''))
+  return proxy(init(facets, items, '', 0))
 }
