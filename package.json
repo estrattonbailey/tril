@@ -1,0 +1,35 @@
+{
+  "name": "tril",
+  "version": "0.0.1",
+  "description": "",
+  "source": "index.js",
+  "module": "dist/tril.es.js",
+  "main": "dist/tril.js",
+  "umd:main": "dist/tril.umd.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "microbundle build",
+    "watch": "microbundle watch",
+    "publish": "npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/estrattonbailey/tril.git"
+  },
+  "keywords": [
+    "database",
+    "decision",
+    "tree"
+  ],
+  "author": "estrattonbailey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/estrattonbailey/tril/issues"
+  },
+  "homepage": "https://github.com/estrattonbailey/tril#readme",
+  "dependencies": {
+    "microbundle": "^0.2.4"
+  }
+}
