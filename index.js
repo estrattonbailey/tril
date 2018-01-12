@@ -6,29 +6,24 @@ function proxy (target) {
   })
 }
 
-function init (facets, items, keypath, deviation) {
-  let o = {}
+export default function db (entries) {
+  let deviation = 0
+  let keypath = ''
+  const facets = {}
+  const items = []
 
-  for (let facet in facets) {
-    o[facet] = {
-      get () {
-        keypath += facet + '='
-        let i = {}
-        for (let val of facets[facet]) {
-          i[val] = {
-            get () {
-              keypath += val + ','
-              return init(facets, items, keypath, deviation)
-            }
-          }
-        }
-
-        return proxy(Object.create({}, i))
+  while (entries.length) {
+    const i = entries.pop()
+    for (let f in i.facets) {
+      facets[f] = facets[f] || []
+      for (let v of i.facets[f]) {
+        facets[f].indexOf(v) < 0 && facets[f].push(v)
       }
     }
+    items.push(i)
   }
 
-  return proxy(Object.create({
+  const proto = {
     get items () {
       let len = 0 - (this.deviation !== undefined ? this.deviation : 0)
       let _facets = {}
@@ -57,23 +52,29 @@ function init (facets, items, keypath, deviation) {
     get deviation () {
       return deviation
     }
-  }, o))
-}
-
-export default function db (entries) {
-  const facets = {}
-  const items = []
-
-  while (entries.length) {
-    const i = entries.pop()
-    for (let f in i.facets) {
-      facets[f] = facets[f] || []
-      for (let v of i.facets[f]) {
-        facets[f].indexOf(v) < 0 && facets[f].push(v)
-      }
-    }
-    items.push(i)
   }
 
-  return proxy(init(facets, items, '', 0))
+  const db = (function walk (parent) {
+    let o = {}
+    for (let facet in facets) {
+      o[facet] = {
+        get () {
+          keypath += facet + '='
+          let i = {}
+          for (let val of facets[facet]) {
+            i[val] = {
+              get () {
+                keypath += val + ','
+                return walk(parent)
+              }
+            }
+          }
+          return proxy(Object.create(parent, i))
+        }
+      }
+    }
+    return proxy(Object.create(parent, o))
+  })(Object.create(proto))
+
+  return proxy(db)
 }
